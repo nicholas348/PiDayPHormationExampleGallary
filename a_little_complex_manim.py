@@ -72,38 +72,71 @@ class PerfectSineWave(Scene):
 
 
 
-class Brachistochrone(Scene):
+
+
+class LissajousMorph(Scene):
     def construct(self):
-        ax = Axes(x_range=[0, 5], y_range=[-3, 0])
+        # A simple plane, slightly faded
+        ax = Axes(x_range=[-3, 3], y_range=[-3, 3]).set_opacity(0.3)
 
-        # Straight line vs Cycloid
-        straight = ax.plot(lambda x: -0.6 * x, x_range=[0, 5], color=RED)
-        cycloid = ax.plot(
-            lambda x: -np.sqrt(1 - ((x - 2.5) / 2.5) ** 2) * 1.5 - 1.5,  # Simplified curve
-            x_range=[0, 5], color=GREEN
-        )
+        # This tracks the "phase shift" to animate the morphing
+        phase_tracker = ValueTracker(0)
 
-        dot1 = Dot(color=RED)
-        dot2 = Dot(color=GREEN)
+        # Draw the curve dynamically
+        # x = A * sin(a*t + phase), y = B * sin(b*t)
+        curve = always_redraw(lambda: ParametricFunction(
+            lambda t: ax.c2p(
+                2.5 * np.sin(3 * t + phase_tracker.get_value()),
+                2.5 * np.sin(2 * t)
+            ),
+            t_range=[0, 2 * PI],
+            color=PURPLE,
+            stroke_width=3
+        ))
 
-        self.add(ax, straight, cycloid)
+        self.add(ax, curve)
 
-        # Animate two dots racing
+        # Animate the phase shifting from 0 to 2*PI
         self.play(
-            MoveAlongPath(dot1, straight),
-            MoveAlongPath(dot2, cycloid),
-            run_time=2, rate_func=slow_into
+            phase_tracker.animate.set_value(2 * PI),
+            run_time=6,
+            rate_func=linear
         )
+        self.wait()
 
 
-class GravityField(Scene):
+class FourierSquareWave(Scene):
     def construct(self):
-        func = lambda pos: np.array([
-            -pos[1] / (pos[0] ** 2 + pos[1] ** 2 + 1),  # Rotation effect
-            pos[0] / (pos[0] ** 2 + pos[1] ** 2 + 1),
-            0
-        ])
+        ax = Axes(x_range=[0, 10, 1], y_range=[-2, 2, 1])
 
-        field = ArrowVectorField(func, x_range=[-4, 4], y_range=[-3, 3])
-        self.play(StreamLines(func).create())
+        # Tracks how many sine waves we are adding together
+        terms_tracker = ValueTracker(1)
+
+        # The math function that adds 'n' number of sine waves
+        def fourier_approx(x, n_terms):
+            result = 0
+            for k in range(1, int(n_terms) * 2, 2):  # Uses odd numbers: 1, 3, 5...
+                result += (4 / (PI * k)) * np.sin(k * x)
+            return result
+
+        # Redraw the curve as the number of terms increases
+        curve = always_redraw(lambda: ax.plot(
+            lambda x: fourier_approx(x, max(1, terms_tracker.get_value())),
+            color=TEAL
+        ))
+
+        # A dynamic label to show what math is happening
+        label = always_redraw(lambda: Text(
+            f"Sine Waves Added: {int(terms_tracker.get_value())}",
+            font_size=32
+        ).to_corner(UL))
+
+        self.add(ax, curve, label)
+
+        # Animate from 1 sine wave up to 15 added together
+        self.play(
+            terms_tracker.animate.set_value(15),
+            run_time=6,
+            rate_func=linear
+        )
         self.wait()
