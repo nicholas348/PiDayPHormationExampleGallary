@@ -19,25 +19,57 @@ class RiemannIntegral(Scene):
         self.wait()
 
 
-class SineWaveUnitCircle(Scene):
+class PerfectSineWave(Scene):
     def construct(self):
-        # Setup Axes and Circle
-        axes = Axes(x_range=[-2, 8], y_range=[-2, 2], x_length=10).shift(RIGHT)
-        circle = Circle(radius=1.5, color=WHITE).shift(LEFT * 3)
-        dot = Dot(color=YELLOW).move_to(circle.get_right())
+        # 1. Create a Coordinate System (Scaled to fit the right side)
+        axes = Axes(
+            x_range=[0, 4 * PI, PI],
+            y_range=[-1.5, 1.5],
+            x_length=7,
+            y_length=3,
+            axis_config={"include_tip": False}
+        ).to_edge(RIGHT, buff=0.5)
 
-        # The tracing line and curve
-        path = TracedPath(dot.get_center, stroke_color=YELLOW)
-        moving_line = always_redraw(lambda: Line(circle.get_center(), dot.get_center(), color=RED))
+        # 2. Create the Circle (Shifted to the left)
+        circle = Circle(radius=1.5, color=BLUE).to_edge(LEFT, buff=1)
+        center = circle.get_center()
 
-        self.add(axes, circle, dot, moving_line, path)
+        # 3. The Math "Engine" (Tracks the angle from 0 to 4*PI)
+        t = ValueTracker(0)
 
-        # Rotate the dot and move the entire scene to "draw" the wave
+        # 4. The Moving Parts (Redrawn every frame)
+        # The dot traveling around the circle
+        dot = always_redraw(lambda: Dot(color=YELLOW).move_to(
+            circle.point_at_angle(t.get_value())
+        ))
+
+        # The horizontal line connecting the circle-dot to the wave-dot
+        connection_line = always_redraw(lambda: Line(
+            dot.get_center(),
+            axes.c2p(t.get_value() % (4 * PI), np.sin(t.get_value())),
+            color=WHITE,
+            stroke_width=1,
+            stroke_opacity=0.5
+        ))
+
+        # The Sine Wave itself
+        sine_curve = always_redraw(lambda: axes.plot(
+            lambda x: np.sin(x),
+            x_range=[0, t.get_value() % (4 * PI) if t.get_value() > 0 else 0.001],
+            color=YELLOW
+        ))
+
+        # 5. Visualizing
+        self.add(axes, circle, dot, connection_line, sine_curve)
+
+        # Animate the tracker to "drive" the whole scene
         self.play(
-            Rotate(dot, angle=2 * PI, about_point=circle.get_center()),
-            axes.animate.shift(LEFT * 5),
-            run_time=4, rate_func=linear
+            t.animate.set_value(4 * PI),
+            run_time=8,
+            rate_func=linear
         )
+        self.wait()
+
 
 
 class Brachistochrone(Scene):
