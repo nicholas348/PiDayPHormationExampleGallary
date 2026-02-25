@@ -16,7 +16,7 @@ class ColorSwitcher(Scene):
 
 
     def on_key_press(self, symbol, modifiers):
-        # We look for the "R", "G", and "B" keys
+        # 我们检查按下的键，并根据按键改变方块的颜色
         if symbol == ord("r"):
             self.mobjects[0].set_color(RED)
         elif symbol == ord("g"):
@@ -24,7 +24,7 @@ class ColorSwitcher(Scene):
         elif symbol == ord("b"):
             self.mobjects[0].set_color(BLUE)
 
-        # Standard Manim event handling
+        # 标准的事件处理调用，确保其他按键事件仍然可以被处理
         super().on_key_press(symbol, modifiers)
 
 
