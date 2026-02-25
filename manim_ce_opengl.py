@@ -2,7 +2,7 @@ from manim import *
 
 """
 渲染:
-manim -qm -p --renderer=opengl basic_manim.py ColorSwitcher
+manim -qm -p --renderer=opengl manim_ce_opengl.py ColorSwitcher
 按下R、G、B键来切换颜色
 """
 class ColorSwitcher(Scene):
@@ -31,7 +31,7 @@ class ColorSwitcher(Scene):
 
 """
 渲染:
-manim -qm -p --renderer=opengl basic_manim.py PolygonExplorer
+manim -qm -p --renderer=opengl manim_ce_opengl.py PolygonExplorer
 按下W键增加边数，S键减少边数（最少为3）
 """
 class PolygonExplorer(Scene):
