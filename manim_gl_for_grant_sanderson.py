@@ -12,8 +12,7 @@ manimgl manim_gl_for_grant_sanderson.py Introduction -so保存最后一个帧为
 
 class Introduction(Scene):
     def construct(self):
-        # 在ManimGL中，Tex使用LaTeX（需要安装MikTeX或TeX Live）
-        # 如果你没有安装LaTeX，可以使用Text替代Tex来显示文本，但无法渲染数学公式。
+        # 创建一个文本对象
         hello = Text("Hello ManimGL!")
         
         # 将文本添加到场景中并显示
@@ -42,13 +41,15 @@ manimgl manim_gl_for_grant_sanderson.py SurfaceExample -w渲染成视频
 manimgl manim_gl_for_grant_sanderson.py SurfaceExample -o渲染成视频并打开
 manimgl manim_gl_for_grant_sanderson.py SurfaceExample -so保存最后一个帧为图片
 """
+
+
 class SurfaceExample(Scene):
     CONFIG = {
         "camera_class": ThreeDCamera,
     }
 
     def construct(self):
-        surface_text = Text("For 3d scenes, try using surfaces")
+        surface_text = Text("3d曲面示例", font_size=36)
         surface_text.fix_in_frame()
         surface_text.to_edge(UP)
         self.add(surface_text)
@@ -70,7 +71,7 @@ class SurfaceExample(Scene):
             mob.mesh = SurfaceMesh(mob)
             mob.mesh.set_stroke(BLUE, 1, opacity=0.5)
 
-        # Set perspective
+        # 设置相机视角
         frame = self.camera.frame
         frame.set_euler_angles(
             theta=-30 * DEGREES,
@@ -97,16 +98,16 @@ class SurfaceExample(Scene):
 
         self.play(
             Transform(surface, surfaces[2]),
-            # Move camera frame during the transition
+            # 同时旋转相机来展示不同的视角
             frame.animate.increment_phi(-10 * DEGREES),
             frame.animate.increment_theta(-20 * DEGREES),
             run_time=3
         )
-        # Add ambient rotation
+        # 让相机持续旋转
         frame.add_updater(lambda m, dt: m.increment_theta(-0.1 * dt))
 
-        # Play around with where the light is
-        light_text = Text("You can move around the light source")
+        # 移动光源
+        light_text = Text("你可以使用代码移动光源")
         light_text.move_to(surface_text)
         light_text.fix_in_frame()
 
@@ -117,7 +118,7 @@ class SurfaceExample(Scene):
         self.play(light.animate.move_to(3 * IN), run_time=5)
         self.play(light.animate.shift(10 * OUT), run_time=5)
 
-        drag_text = Text("Try moving the mouse while pressing d or s")
+        drag_text = Text("尝试使用d移动相机位置")
         drag_text.move_to(light_text)
         drag_text.fix_in_frame()
 
@@ -139,8 +140,6 @@ manimgl manim_gl_for_grant_sanderson.py InteractiveTransform -i 可交互模式
 
 
 当你处于可交互模式时，尝试在终端中输入：
-
-When the window opens, type these into your terminal:
 
 --移动点h1--
 self.play(h1.animate.move_to([2, 0, 0]))
@@ -172,12 +171,11 @@ import numpy as np
 
 class TerminalTransform(Scene):
     def construct(self):
-        # 1. Setup the interactive "Handles" (The dots)
+        
         h1 = Dot([1, 0, 0], color=RED)
         h2 = Dot([0, 1, 0], color=GREEN)
         
-        # 2. Create the Grid with custom properties
-        # 'faded_line_ratio' and 'stroke_width' change the look
+        
         grid = NumberPlane(
             background_line_style={
                 "stroke_color": BLUE_E,
@@ -186,25 +184,24 @@ class TerminalTransform(Scene):
             }
         )
         
-        # 3. Create the "Transformable" Grid
-        # This grid starts as a standard one but will be warped by our matrix
+        #  创建一个新的网格，这个网格将被我们的矩阵变形
         moving_grid = NumberPlane(
             x_range=(-10, 10),
             y_range=(-10, 10),
             background_line_style={"stroke_color": WHITE, "stroke_width": 1}
         )
 
-        # Matrix display
+        
         matrix_tex = DecimalMatrix([[1, 0], [0, 1]], num_decimal_places=1)
         matrix_tex.to_corner(UL).fix_in_frame()
 
-        # Vectors and Labels
+        
         v1 = Vector(color=RED).add_updater(lambda v: v.put_start_and_end_on(ORIGIN, h1.get_center()))
         v2 = Vector(color=GREEN).add_updater(lambda v: v.put_start_and_end_on(ORIGIN, h2.get_center()))
         label_v1 = Tex("\\hat{i}", color=RED).add_updater(lambda m: m.next_to(h1, UR, buff=0.1))
         label_v2 = Tex("\\hat{j}", color=GREEN).add_updater(lambda m: m.next_to(h2, UR, buff=0.1))
 
-        # --- THE CORE LOGIC: GRID TRANSFORMATION ---
+        
         def get_current_matrix():
             return np.array([
                 [h1.get_center()[0], h2.get_center()[0], 0],
@@ -212,8 +209,7 @@ class TerminalTransform(Scene):
                 [0, 0, 1]
             ])
 
-        # This updater warps the moving_grid based on h1 and h2
-        # We start with a fresh grid and apply the matrix every frame
+        
         original_grid = moving_grid.copy()
         def update_grid(g):
             matrix = get_current_matrix()
@@ -223,7 +219,7 @@ class TerminalTransform(Scene):
 
         moving_grid.add_updater(update_grid)
 
-        # Matrix text updater
+        
         def update_matrix_tex(m):
             c1, c2 = h1.get_center(), h2.get_center()
             nm = DecimalMatrix([[c1[0], c2[0]], [c1[1], c2[1]]], num_decimal_places=1)
