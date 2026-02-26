@@ -10,20 +10,53 @@ manim -pql a_little_complex_manim.py RiemannIntegral
 
 class RiemannIntegral(Scene):
     def construct(self):
-        ax = Axes(x_range=[0, 5], y_range=[0, 6], axis_config={"include_tip": False})
-        curve = ax.plot(lambda x: 0.1 * (x - 2) ** 3 + 3, color=BLUE)
+        title = Text("Riemann Integral", font_size=44).to_edge(UP)
+        ax = Axes(
+            x_range=[0, 5, 1],
+            y_range=[0, 6, 1],
+            x_length=9,
+            y_length=4.8,
+            axis_config={"include_tip": False},
+        ).to_edge(DOWN)
+        curve = ax.plot(lambda x: 0.1 * (x - 2) ** 3 + 3, x_range=[0, 5], color=BLUE)
 
-        # 制造矩形来近似曲线下的面积
-        rects = ax.get_riemann_rectangles(curve, x_range=[0.5, 4.5], dx=0.5, fill_opacity=0.5)
+        dx = ValueTracker(0.8)
 
-        self.add(ax, curve)
-        self.play(Write(rects))
-        self.wait()
+        def f(x):
+            return 0.1 * (x - 2) ** 3 + 3
 
-        # 转换成更细的矩形来更好地近似面积
-        finer_rects = ax.get_riemann_rectangles(curve, x_range=[0.5, 4.5], dx=0.1, fill_opacity=0.5)
-        self.play(ReplacementTransform(rects, finer_rects), run_time=2)
-        self.wait()
+        rects = always_redraw(
+            lambda: ax.get_riemann_rectangles(
+                curve,
+                x_range=[0.5, 4.5],
+                dx=max(0.05, dx.get_value()),
+                fill_opacity=0.6,
+                stroke_width=1,
+            )
+        )
+
+        approx = always_redraw(
+            lambda: MathTex(
+                r"\Delta x=",
+                f"{dx.get_value():.2f}",
+            ).scale(0.8).to_corner(UL)
+        )
+
+        n_rects = always_redraw(
+            lambda: Text(
+                f"rectangles: {int(np.ceil((4.5 - 0.5) / max(0.05, dx.get_value())))}",
+                font_size=28,
+                color=GRAY_A,
+            ).to_corner(UL).shift(DOWN * 0.8)
+        )
+
+        self.play(FadeIn(title, shift=DOWN * 0.3))
+        self.play(Create(ax), run_time=1.0)
+        self.play(Create(curve), run_time=1.2)
+        self.add(rects, approx, n_rects)
+        self.wait(0.4)
+        self.play(dx.animate.set_value(0.12), run_time=3, rate_func=smooth)
+        self.wait(0.4)
 
 
 
@@ -35,7 +68,9 @@ manim -pql a_little_complex_manim.py PerfectSineWave
 
 class PerfectSineWave(Scene):
     def construct(self):
-        # 1. 创造坐标轴 (左侧留出空间给圆) 
+        title = Text("Unit Circle -> Sine", font_size=44).to_edge(UP)
+
+        # 1. 创造坐标轴 (左侧留出空间给圆)
         axes = Axes(
             x_range=[0, 4 * PI, PI],
             y_range=[-1.5, 1.5],
@@ -57,6 +92,12 @@ class PerfectSineWave(Scene):
             circle.point_at_angle(t.get_value())
         ))
 
+        radius_line = always_redraw(lambda: Line(center, dot.get_center(), color=WHITE).set_stroke(width=2, opacity=0.8))
+
+        proj_dot = always_redraw(lambda: Dot(color=YELLOW_A).move_to(
+            axes.c2p(t.get_value() % (4 * PI), np.sin(t.get_value()))
+        ).scale(0.9))
+
         # 连接圆上点和正弦波上对应点的线条
         connection_line = always_redraw(lambda: Line(
             dot.get_center(),
@@ -73,16 +114,20 @@ class PerfectSineWave(Scene):
             color=YELLOW
         ))
 
+        readout = always_redraw(
+            lambda: MathTex(
+                r"t=", f"{(t.get_value() % (4 * PI)):.2f}",
+                r"\ \ \sin(t)=", f"{np.sin(t.get_value()):.2f}",
+            ).scale(0.7).to_corner(UL)
+        )
+
         # 5. 可视化所有元素
-        self.add(axes, circle, dot, connection_line, sine_curve)
+        self.play(FadeIn(title, shift=DOWN * 0.3))
+        self.add(axes, circle, dot, radius_line, connection_line, sine_curve, proj_dot, readout)
 
         # 6. 动画：让t从0增加到4*PI，展示点沿圆周移动以及正弦波的形成
-        self.play(
-            t.animate.set_value(4 * PI),
-            run_time=8,
-            rate_func=linear
-        )
-        self.wait()
+        self.play(t.animate.set_value(4 * PI), run_time=8, rate_func=linear)
+        self.wait(0.5)
 
 
 
@@ -94,32 +139,42 @@ manim -pql a_little_complex_manim.py LissajousMorph
 
 class LissajousMorph(Scene):
     def construct(self):
-        # 一个坐标轴来展示曲线
-        ax = Axes(x_range=[-3, 3], y_range=[-3, 3]).set_opacity(0.3)
+        title = Text("Lissajous Morph", font_size=44).to_edge(UP)
+        ax = Axes(x_range=[-3, 3, 1], y_range=[-3, 3, 1], x_length=8, y_length=6).set_opacity(0.25)
 
-        # 一个追踪器来控制动画
         phase_tracker = ValueTracker(0)
 
-        # Lissajous曲线的参数方程
-        curve = always_redraw(lambda: ParametricFunction(
-            lambda t: ax.c2p(
-                2.5 * np.sin(3 * t + phase_tracker.get_value()),
-                2.5 * np.sin(2 * t)
-            ),
-            t_range=[0, 2 * PI],
-            color=PURPLE,
-            stroke_width=3
-        ))
-
-        self.add(ax, curve)
-
-        # 让phase_tracker从0增加到2*PI，展示Lissajous曲线的变化
-        self.play(
-            phase_tracker.animate.set_value(2 * PI),
-            run_time=6,
-            rate_func=linear
+        curve = always_redraw(
+            lambda: ParametricFunction(
+                lambda t: ax.c2p(
+                    2.5 * np.sin(3 * t + phase_tracker.get_value()),
+                    2.5 * np.sin(2 * t),
+                ),
+                t_range=[0, 2 * PI],
+                color=PURPLE,
+                stroke_width=4,
+            ).set_color_by_gradient(PURPLE_A, BLUE_B, TEAL_B)
         )
-        self.wait()
+
+        moving_dot = always_redraw(
+            lambda: Dot(
+                ax.c2p(
+                    2.5 * np.sin(3 * 0 + phase_tracker.get_value()),
+                    2.5 * np.sin(2 * 0),
+                ),
+                color=YELLOW,
+            )
+        )
+
+        trail = TracedPath(moving_dot.get_center, stroke_color=YELLOW, stroke_width=2, dissipating_time=1.2)
+        label = always_redraw(
+            lambda: MathTex(r"\phi=", f"{phase_tracker.get_value():.2f}").scale(0.8).to_corner(UL)
+        )
+
+        self.play(FadeIn(title, shift=DOWN * 0.3))
+        self.add(ax, curve, moving_dot, trail, label)
+        self.play(phase_tracker.animate.set_value(2 * PI), run_time=6, rate_func=linear)
+        self.wait(0.5)
 
 
 
@@ -131,12 +186,11 @@ manim -pql a_little_complex_manim.py FourierSquareWave
 
 class FourierSquareWave(Scene):
     def construct(self):
-        ax = Axes(x_range=[0, 10, 1], y_range=[-2, 2, 1])
+        title = Text("Fourier Square Wave", font_size=44).to_edge(UP)
+        ax = Axes(x_range=[0, 10, 1], y_range=[-2, 2, 1], x_length=9, y_length=4.8).to_edge(DOWN)
 
-        # 追踪当前使用了多少个正弦波来近似方波
         terms_tracker = ValueTracker(1)
 
-        # 一个函数来计算方波的傅里叶级数近似值
         def fourier_approx(x, n_terms):
             result = 0
             for k in range(1, int(n_terms) * 2, 2):  # 只使用奇数项
@@ -144,23 +198,29 @@ class FourierSquareWave(Scene):
             return result
 
         # 动态绘制方波
-        curve = always_redraw(lambda: ax.plot(
-            lambda x: fourier_approx(x, max(1, terms_tracker.get_value())),
-            color=TEAL
-        ))
+        curve = always_redraw(
+            lambda: ax.plot(
+                lambda x: fourier_approx(x, max(1, terms_tracker.get_value())),
+                color=TEAL,
+            )
+        )
 
         # 一个用于展示当前添加了多少个正弦波的标签
-        label = always_redraw(lambda: Text(
-            f"Sine Waves Added: {int(terms_tracker.get_value())}",
-            font_size=32
-        ).to_corner(UL))
+        label = always_redraw(
+            lambda: Text(
+                f"Terms: {int(terms_tracker.get_value())}",
+                font_size=32,
+            ).to_corner(UL)
+        )
 
+        gibbs_hint = Text("项数越多，越接近方波 (但边缘会出现振铃)", font_size=26, color=GRAY_A)
+        gibbs_hint.next_to(title, DOWN)
+
+        self.play(FadeIn(title, shift=DOWN * 0.3), FadeIn(gibbs_hint, shift=DOWN * 0.2))
         self.add(ax, curve, label)
 
-        # 渲染动画，逐渐增加正弦波的数量
-        self.play(
-            terms_tracker.animate.set_value(15),
-            run_time=6,
-            rate_func=linear
-        )
-        self.wait()
+        for n in [1, 2, 3, 5, 8, 12, 15]:
+            self.play(terms_tracker.animate.set_value(n), run_time=0.9, rate_func=smooth)
+            self.wait(0.15)
+
+        self.wait(0.5)

@@ -1,5 +1,5 @@
 from manimlib import *
-from matplotlib import axes
+import numpy as np
 
 """
 渲染:
@@ -12,17 +12,37 @@ manimgl manim_gl_for_grant_sanderson.py Introduction -so保存最后一个帧为
 
 class Introduction(Scene):
     def construct(self):
-        # 创建一个文本对象
-        hello = Text("Hello ManimGL!")
-        
-        # 将文本添加到场景中并显示
-        self.play(Write(hello))
-        self.wait()
-        
-        # 接下来，我们将文本变形成一个圆形，展示ManimGL的变形功能
-        circle = Circle(color=BLUE)
-        self.play(ReplacementTransform(hello, circle))
-        self.wait()
+        title = Text("ManimGL", font_size=72, gradient=(BLUE, TEAL))
+        subtitle = Text("实时渲染 + 可交互窗口", font_size=36, color=GREY_B)
+        subtitle.next_to(title, DOWN)
+        group = VGroup(title, subtitle)
+
+        self.play(Write(title), FadeIn(subtitle, shift=UP * 0.25), run_time=1.2)
+        self.wait(0.3)
+
+        badge = RoundedRectangle(corner_radius=0.2, width=8.5, height=2.6)
+        badge.set_stroke(WHITE, 2).set_fill(BLACK, opacity=0.25)
+        badge.move_to(group)
+        self.play(FadeIn(badge), run_time=0.6)
+        self.play(group.animate.to_edge(UP), badge.animate.to_edge(UP), run_time=1.0)
+
+        hello = Text("Hello ManimGL!", font_size=56)
+        self.play(FadeIn(hello, shift=DOWN * 0.4))
+        self.wait(0.2)
+
+        circle = Circle(color=BLUE).set_fill(BLUE_E, opacity=0.25)
+        square = Square(color=GREEN).set_fill(GREEN_E, opacity=0.25)
+        triangle = Triangle(color=YELLOW).set_fill(YELLOW_E, opacity=0.25)
+
+        self.play(ReplacementTransform(hello, circle), run_time=1.0)
+        self.play(Transform(circle, square), run_time=0.8)
+        self.play(Transform(circle, triangle), run_time=0.8)
+
+        orbit = Circle(radius=2.6, color=GREY_B)
+        dot = Dot(color=RED)
+        self.play(ShowCreation(orbit), FadeIn(dot))
+        self.play(MoveAlongPath(dot, orbit), run_time=2.0, rate_func=linear)
+        self.wait(0.3)
 
 
 
@@ -49,11 +69,14 @@ class SurfaceExample(Scene):
     }
 
     def construct(self):
-        surface_text = Text("3d曲面示例", font_size=36)
+        surface_text = Text("3D 曲面示例", font_size=36)
         surface_text.fix_in_frame()
         surface_text.to_edge(UP)
-        self.add(surface_text)
-        self.wait(0.1)
+        hint = Text("拖动窗口/滚轮可改变视角", font_size=24, color=GREY_B)
+        hint.fix_in_frame()
+        hint.next_to(surface_text, DOWN)
+        self.add(surface_text, hint)
+        self.wait(0.2)
 
         torus1 = Torus(r1=1, r2=1)
         torus2 = Torus(r1=3, r2=1)
@@ -80,10 +103,7 @@ class SurfaceExample(Scene):
 
         surface = surfaces[0]
 
-        self.play(
-            FadeIn(surface),
-            ShowCreation(surface.mesh, lag_ratio=0.01, run_time=3),
-        )
+        self.play(FadeIn(surface), ShowCreation(surface.mesh, lag_ratio=0.01, run_time=3))
         for mob in surfaces:
             mob.add(mob.mesh)
         surface.save_state()
@@ -107,7 +127,7 @@ class SurfaceExample(Scene):
         frame.add_updater(lambda m, dt: m.increment_theta(-0.1 * dt))
 
         # 移动光源
-        light_text = Text("你可以使用代码移动光源")
+        light_text = Text("你可以使用代码移动光源", font_size=30)
         light_text.move_to(surface_text)
         light_text.fix_in_frame()
 
@@ -118,12 +138,12 @@ class SurfaceExample(Scene):
         self.play(light.animate.move_to(3 * IN), run_time=5)
         self.play(light.animate.shift(10 * OUT), run_time=5)
 
-        drag_text = Text("尝试使用d移动相机位置")
+        drag_text = Text("尝试使用 d 移动相机位置", font_size=30)
         drag_text.move_to(light_text)
         drag_text.fix_in_frame()
 
         self.play(FadeTransform(light_text, drag_text))
-        self.wait()
+        self.wait(0.5)
 
 
 
@@ -132,11 +152,11 @@ class SurfaceExample(Scene):
 
 """
 渲染:
-manimgl manim_gl_for_grant_sanderson.py InteractiveTransform 可移动窗口
-manimgl manim_gl_for_grant_sanderson.py InteractiveTransform -w渲染成视频
-manimgl manim_gl_for_grant_sanderson.py InteractiveTransform -o渲染成视频并打开
-manimgl manim_gl_for_grant_sanderson.py InteractiveTransform -so保存最后一个帧为图片
-manimgl manim_gl_for_grant_sanderson.py InteractiveTransform -i 可交互模式
+manimgl manim_gl_for_grant_sanderson.py TerminalTransform 可移动窗口
+manimgl manim_gl_for_grant_sanderson.py TerminalTransform -w渲染成视频
+manimgl manim_gl_for_grant_sanderson.py TerminalTransform -o渲染成视频并打开
+manimgl manim_gl_for_grant_sanderson.py TerminalTransform -so保存最后一个帧为图片
+manimgl manim_gl_for_grant_sanderson.py TerminalTransform -i 可交互模式
 
 
 当你处于可交互模式时，尝试在终端中输入：
@@ -163,15 +183,16 @@ moving_grid.set_style(stroke_width=3)
 moving_grid.set_style(stroke_width=4)
 moving_grid.set_style(stroke_width=5)
 """
-
-
-
-from manimlib import *
-import numpy as np
-
 class TerminalTransform(Scene):
     def construct(self):
-        
+        title = Text("Terminal Transform", font_size=42)
+        title.to_edge(UP)
+        title.fix_in_frame()
+        hint = Text("用 -i 进入交互模式，在终端输入 self.play(...)", font_size=24, color=GREY_B)
+        hint.next_to(title, DOWN)
+        hint.fix_in_frame()
+        self.add(title, hint)
+
         h1 = Dot([1, 0, 0], color=RED)
         h2 = Dot([0, 1, 0], color=GREEN)
         
@@ -229,6 +250,10 @@ class TerminalTransform(Scene):
         matrix_tex.add_updater(update_matrix_tex)
 
         self.add(grid, moving_grid, v1, v2, h1, h2, label_v1, label_v2, matrix_tex)
+
+        self.play(FadeIn(h1), FadeIn(h2), run_time=0.4)
+        self.play(h1.animate.shift(RIGHT * 1.0), h2.animate.shift(UP * 1.0), run_time=0.8)
+        self.play(h1.animate.move_to([1, 0, 0]), h2.animate.move_to([0, 1, 0]), run_time=0.8)
 
         self.embed()
         
