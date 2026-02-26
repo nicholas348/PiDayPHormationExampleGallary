@@ -1,0 +1,10 @@
+# Manim render outputs
+media/
+videos/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
