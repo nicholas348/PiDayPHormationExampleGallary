@@ -163,6 +163,9 @@ manimgl manim_gl_for_grant_sanderson.py TerminalTransform -i 可交互模式
 
 --移动点h1--
 self.play(h1.animate.move_to([2, 0, 0]))
+self.play(h1.animate.move_to([3, 1, 0]))
+self.play(h1.animate.move_to([-2, 1, 0]))
+self.play(h1.animate.move_to([4, -4, 0]))
 
 --移动点h2--
 self.play(h2.animate.move_to([1, 1, 0]))
@@ -173,15 +176,18 @@ self.play(h2.animate.move_to([-3, 2, 0]))
 --重置点位置--
 self.play(h1.animate.move_to([1, 0, 0]), h2.animate.move_to([0, 1, 0]))
 
--改变网格颜色--
-moving_grid.set_style(stroke_color=RED)
+-改变网格颜色（需要改original_grid，因为updater每帧从它复制）--
+original_grid.set_style(stroke_color=RED)
+original_grid.set_style(stroke_color=BLUE)
+original_grid.set_style(stroke_color=GREEN)
+original_grid.set_style(stroke_color=WHITE)
 
--改变网格线宽--
-moving_grid.set_style(stroke_width=1)
-moving_grid.set_style(stroke_width=2)
-moving_grid.set_style(stroke_width=3)
-moving_grid.set_style(stroke_width=4)
-moving_grid.set_style(stroke_width=5)
+-改变网格线宽（同理需要改original_grid）--
+original_grid.set_style(stroke_width=1)
+original_grid.set_style(stroke_width=2)
+original_grid.set_style(stroke_width=3)
+original_grid.set_style(stroke_width=4)
+original_grid.set_style(stroke_width=5)
 """
 class TerminalTransform(Scene):
     """Interactive matrix/plane transform demo scene."""

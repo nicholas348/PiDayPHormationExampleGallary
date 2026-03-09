@@ -73,7 +73,7 @@ class PolygonExplorer(Scene):
 
         self.poly = RegularPolygon(n=self.sides).scale(2).set_color_by_gradient(TEAL, BLUE)
         self.count_text = Integer(self.sides).to_edge(UP)
-        label = Text("Sides:", font_size=32).next_to(self.count_text, LEFT)
+        label = Text("Sides:", font_size=32).shift(DOWN*3)
         self.count_text.next_to(label, RIGHT, buff=0.25)
 
         self.spin_state = always_redraw(
