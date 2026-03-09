@@ -61,7 +61,7 @@ class Shapes(Scene):
 
 """
 渲染:
-manim -pql basic_manim.py Shapes
+manim -pql basic_manim.py Positioning
 """
 
 class Positioning(Scene):
@@ -161,10 +161,10 @@ class GraphExample(Scene):
 
 """
 渲染:
-manim -pql basic_manim.py MoveAlongPath
+manim -pql basic_manim.py MoveAlongPathScene
 """
 
-class MoveAlongPath(Scene):
+class MoveAlongPathScene(Scene):
     def construct(self):
         title = Text("MoveAlongPath", font_size=44).to_edge(UP)
         path = Circle(radius=2.5, color=BLUE)
@@ -194,7 +194,7 @@ class Grouping(Scene):
         ).arrange(RIGHT, buff=1)
 
         brace = Brace(g, direction=DOWN)
-        label = brace.get_text("一个整体一起动")
+        label = Text("一个整体一起动", font_size=28).next_to(brace, DOWN)
 
         self.play(FadeIn(title, shift=DOWN * 0.3))
         self.play(LaggedStart(*[Create(m) for m in g], lag_ratio=0.15))
@@ -289,8 +289,16 @@ class FlashEffect(Scene):
         c = Circle(color=WHITE).set_fill(BLUE_E, opacity=0.2).scale(1.4)
         self.play(FadeIn(title, shift=DOWN * 0.3))
         self.add(c)
-        self.play(Flash(c, color=YELLOW), run_time=0.6)
-        self.play(Flash(c, color=ORANGE), run_time=0.6)
+        flash_point = c.get_center()
+        flash_radius = c.width / 2
+        self.play(
+            Flash(flash_point, color=YELLOW, flash_radius=flash_radius, line_length=0.25),
+            run_time=0.6,
+        )
+        self.play(
+            Flash(flash_point, color=ORANGE, flash_radius=flash_radius, line_length=0.25),
+            run_time=0.6,
+        )
         self.wait(0.5)
 
 

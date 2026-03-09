@@ -11,6 +11,8 @@ manim -pql a_little_complex_manim.py RiemannIntegral
 class RiemannIntegral(Scene):
     def construct(self):
         title = Text("Riemann Integral", font_size=44).to_edge(UP)
+
+        # 1. 创建坐标轴与函数曲线（我们用曲线下面的面积来直观理解“积分”）
         ax = Axes(
             x_range=[0, 5, 1],
             y_range=[0, 6, 1],
@@ -18,13 +20,18 @@ class RiemannIntegral(Scene):
             y_length=4.8,
             axis_config={"include_tip": False},
         ).to_edge(DOWN)
+
+        # 2. 定义函数 f(x) 并绘制曲线
         def f(x):
             return 0.1 * (x - 2) ** 3 + 3
 
         curve = ax.plot(f, x_range=[0, 5], color=BLUE)
 
+        # 3. 用 ValueTracker 控制矩形宽度 Δx：Δx 越小，矩形越多，逼近越“精细”
         dx = ValueTracker(0.8)
 
+        # 4. Riemann 矩形（在区间 [0.5, 4.5] 上用宽为 Δx 的矩形近似曲线下方面积）
+        #    always_redraw 确保 dx 改变时，矩形会实时重新生成
         rects = always_redraw(
             lambda: ax.get_riemann_rectangles(
                 curve,
@@ -35,6 +42,7 @@ class RiemannIntegral(Scene):
             )
         )
 
+        # 5. 左上角显示当前 Δx 数值
         approx = always_redraw(
             lambda: MathTex(
                 r"\Delta x=",
@@ -42,6 +50,7 @@ class RiemannIntegral(Scene):
             ).scale(0.8).to_corner(UL)
         )
 
+        # 6. 同时显示矩形数量 n（n 大约等于区间长度 / Δx）
         n_rects = always_redraw(
             lambda: Text(
                 f"rectangles: {int(np.ceil((4.5 - 0.5) / max(0.05, dx.get_value())))}",
@@ -50,10 +59,11 @@ class RiemannIntegral(Scene):
             ).to_corner(UL).shift(DOWN * 0.8)
         )
 
+        # 7. 动画：先展示曲线与粗略矩形，再逐渐减小 Δx，让 Riemann 和逼近积分
         self.play(FadeIn(title, shift=DOWN * 0.3))
         self.play(Create(ax), run_time=1.0)
         self.play(Create(curve), run_time=1.2)
-        self.add(rects, approx, n_rects)
+        self.play(FadeIn(rects, approx, n_rects))
         self.wait(0.4)
         self.play(dx.animate.set_value(0.12), run_time=3, rate_func=smooth)
         self.wait(0.4)
@@ -138,10 +148,17 @@ manim -pql a_little_complex_manim.py LissajousMorph
 class LissajousMorph(Scene):
     def construct(self):
         title = Text("Lissajous Morph", font_size=44).to_edge(UP)
+
+        # 1. 创建二维坐标轴（淡化显示，作为背景参考）
         ax = Axes(x_range=[-3, 3, 1], y_range=[-3, 3, 1], x_length=8, y_length=6).set_opacity(0.25)
 
+        # 2. 相位追踪器：逐渐改变相位 φ，观察曲线形状如何“变形”
         phase_tracker = ValueTracker(0)
 
+        # 3. Lissajous 曲线：
+        #    x = A sin(3t + φ)
+        #    y = A sin(2t)
+        #    随着 φ 改变，闭合曲线会在不同图案之间连续过渡
         curve = always_redraw(
             lambda: ParametricFunction(
                 lambda t: ax.c2p(
@@ -154,6 +171,7 @@ class LissajousMorph(Scene):
             ).set_color_by_gradient(PURPLE_A, BLUE_B, TEAL_B)
         )
 
+        # 4. 曲线上的运动点 + 轨迹：帮助看出“生成曲线”的运动过程
         moving_dot = always_redraw(
             lambda: Dot(
                 ax.c2p(
@@ -165,10 +183,13 @@ class LissajousMorph(Scene):
         )
 
         trail = TracedPath(moving_dot.get_center, stroke_color=YELLOW, stroke_width=2, dissipating_time=1.2)
+
+        # 5. 左上角读数：实时显示当前相位 φ
         label = always_redraw(
             lambda: MathTex(r"\phi=", f"{phase_tracker.get_value():.2f}").scale(0.8).to_corner(UL)
         )
 
+        # 6. 动画：从 φ=0 平滑变化到 2π，展示整套图案的形变过程
         self.play(FadeIn(title, shift=DOWN * 0.3))
         self.add(ax, curve, moving_dot, trail, label)
         self.play(phase_tracker.animate.set_value(2 * PI), run_time=6, rate_func=linear)
@@ -177,48 +198,3 @@ class LissajousMorph(Scene):
 
 
 
-"""
-渲染:
-manim -pql a_little_complex_manim.py FourierSquareWave
-"""
-
-class FourierSquareWave(Scene):
-    def construct(self):
-        title = Text("Fourier Square Wave", font_size=44).to_edge(UP)
-        ax = Axes(x_range=[0, 10, 1], y_range=[-2, 2, 1], x_length=9, y_length=4.8).to_edge(DOWN)
-
-        terms_tracker = ValueTracker(1)
-
-        def fourier_approx(x, n_terms):
-            result = 0
-            for k in range(1, int(n_terms) * 2, 2):  # 只使用奇数项
-                result += (4 / (PI * k)) * np.sin(k * x)
-            return result
-
-        # 动态绘制方波
-        curve = always_redraw(
-            lambda: ax.plot(
-                lambda x: fourier_approx(x, max(1, terms_tracker.get_value())),
-                color=TEAL,
-            )
-        )
-
-        # 一个用于展示当前添加了多少个正弦波的标签
-        label = always_redraw(
-            lambda: Text(
-                f"Terms: {int(terms_tracker.get_value())}",
-                font_size=32,
-            ).to_corner(UL)
-        )
-
-        gibbs_hint = Text("项数越多，越接近方波 (但边缘会出现振铃)", font_size=26, color=GRAY_A)
-        gibbs_hint.next_to(title, DOWN)
-
-        self.play(FadeIn(title, shift=DOWN * 0.3), FadeIn(gibbs_hint, shift=DOWN * 0.2))
-        self.add(ax, curve, label)
-
-        for n in [1, 2, 3, 5, 8, 12, 15]:
-            self.play(terms_tracker.animate.set_value(n), run_time=0.9, rate_func=smooth)
-            self.wait(0.15)
-
-        self.wait(0.5)
