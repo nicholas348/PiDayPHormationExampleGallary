@@ -18,12 +18,12 @@ class RiemannIntegral(Scene):
             y_length=4.8,
             axis_config={"include_tip": False},
         ).to_edge(DOWN)
-        curve = ax.plot(lambda x: 0.1 * (x - 2) ** 3 + 3, x_range=[0, 5], color=BLUE)
-
-        dx = ValueTracker(0.8)
-
         def f(x):
             return 0.1 * (x - 2) ** 3 + 3
+
+        curve = ax.plot(f, x_range=[0, 5], color=BLUE)
+
+        dx = ValueTracker(0.8)
 
         rects = always_redraw(
             lambda: ax.get_riemann_rectangles(
@@ -59,9 +59,7 @@ class RiemannIntegral(Scene):
         self.wait(0.4)
 
 
-
-
-"""
+RENDER_INSTRUCTIONS = """
 渲染:
 manim -pql a_little_complex_manim.py PerfectSineWave
 """
@@ -109,7 +107,7 @@ class PerfectSineWave(Scene):
 
         # 正弦波，随着t的增加逐渐绘制出来
         sine_curve = always_redraw(lambda: axes.plot(
-            lambda x: np.sin(x),
+            np.sin,
             x_range=[0, t.get_value() % (4 * PI) if t.get_value() > 0 else 0.001],
             color=YELLOW
         ))

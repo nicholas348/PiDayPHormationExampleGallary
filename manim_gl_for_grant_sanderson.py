@@ -184,6 +184,7 @@ moving_grid.set_style(stroke_width=4)
 moving_grid.set_style(stroke_width=5)
 """
 class TerminalTransform(Scene):
+    """Interactive matrix/plane transform demo scene."""
     def construct(self):
         title = Text("Terminal Transform", font_size=42)
         title.to_edge(UP)
